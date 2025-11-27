@@ -1,0 +1,35 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+main
+
+# Test files
+*.test
+*.out
+
+# Dev container
+.devcontainer/
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Temporary files
+tmp/
+*.tmp
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db

@@ -8,6 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 var cfg = builder.Configuration.Get<AppConfig>() ?? throw new InvalidOperationException("App configuration must be provided.");
 
+builder.AddServiceDefaults();
+
 builder.Services.AddRabbitMq(cfg);
 builder.Services.AddMediator(Assembly.GetExecutingAssembly());
 

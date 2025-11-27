@@ -1,0 +1,35 @@
+FROM golang:1.25 as development
+
+WORKDIR /workspace
+
+RUN go install github.com/go-delve/delve/cmd/dlv@latest && \
+    go install github.com/cosmtrek/air@latest && \
+    go install golang.org/x/tools/gopls@latest
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+CMD ["sleep", "infinity"]
+
+FROM golang:1.25.4-alpine AS build
+
+WORKDIR /app
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/main ./cmd
+
+FROM alpine:latest AS production
+
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /app
+
+COPY --from=build /app/main .
+
+EXPOSE 8080
+
+CMD ["./main"]

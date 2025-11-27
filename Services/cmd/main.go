@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"os"
 	"services/internal/handlers/consumer"
 	"services/internal/handlers/publisher"
 	router "services/internal/infrastructure/messagerouter"
@@ -13,6 +14,13 @@ import (
 
 func main() {
 	rabbitURL := "amqp://guest:guest@localhost:5672/"
+
+	rabbitURL = os.Getenv("ConnectionStrings__rabbitmq")
+	if rabbitURL == "" {
+		rabbitURL = "amqp://guest:guest@localhost:5672/"
+	}
+
+	log.Println(rabbitURL)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
