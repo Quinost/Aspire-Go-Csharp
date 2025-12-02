@@ -17,30 +17,35 @@ type WorkerPool struct {
 func NewWorkerPool(maxWorkers int) *WorkerPool {
 	return &WorkerPool{
 		maxWorkers: maxWorkers,
-		jobQueue: make(chan JobFunc, maxWorkers * 10),
+		jobQueue:   make(chan JobFunc, maxWorkers*10),
 	}
 }
 
 func (p *WorkerPool) StartPool(ctx context.Context) {
-	for i := 1; i <= p.maxWorkers; i++ { 
+	for i := 1; i <= p.maxWorkers; i++ {
 		p.wg.Add(1)
 		go p.worker(ctx, i)
 	}
 }
 
-func (p *WorkerPool) worker(ctx context.Context, id int){
+func (p *WorkerPool) worker(ctx context.Context, id int) {
 	defer p.wg.Done()
 	log.Println("[WP] Worker:", id, "started")
 
 	for {
 		select {
-		case <- ctx.Done():
+		case <-ctx.Done():
 			log.Println("[WP] Worker:", id, "stopping")
 			return
-		case job, ok := <- p.jobQueue:
-			if !ok { return }
+		case job, ok := <-p.jobQueue:
+			if !ok {
+				return
+			}
+
+			log.Println("[WP] Worker:", id, "start processing job")
+
 			if err := job(); err != nil {
-				log.Println("[WP] Worker:", id, "error processing job: ", err);
+				log.Println("[WP] Worker:", id, "error processing job: ", err)
 			} else {
 				log.Println("[WP] Worker:", id, "job completed")
 			}
@@ -48,7 +53,7 @@ func (p *WorkerPool) worker(ctx context.Context, id int){
 	}
 }
 
-func (p *WorkerPool) SubmitNewJob(job JobFunc) {
+func (p *WorkerPool) SubmitJob(job JobFunc) {
 	p.jobQueue <- job
 }
 

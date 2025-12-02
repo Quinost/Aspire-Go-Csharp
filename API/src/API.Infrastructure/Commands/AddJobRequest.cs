@@ -1,5 +1,4 @@
 ﻿using API.Mediator.Requests;
-using API.Shared;
 using API.Shared.Events;
 
 namespace API.Infrastructure.Commands;

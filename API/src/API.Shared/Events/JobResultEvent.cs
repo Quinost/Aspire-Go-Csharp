@@ -1,20 +1,13 @@
-﻿using System;
+﻿namespace API.Shared.Events;
 
-namespace API.Shared.Events
+public record JobResultEvent(
+    Guid JobId,
+    string Name,
+    JobStatus Status,
+    DateTime CreatedAtUTC,
+    DateTime FinishedAtUTC,
+    string? Reason = null
+) : IGoEvent
 {
-    public class JobResultEvent : IGoEvent
-    {
-        public JobResultEvent(Guid jobId, string jobName, DateTime createdAtUTC, DateTime finishedAtUTC)
-        {
-            JobId = jobId;
-            JobName = jobName;
-            CreatedAtUTC = createdAtUTC;
-            FinishedAtUTC = finishedAtUTC;
-        }
-
-        public Guid JobId { get; private set; }
-        public string JobName { get; private set; }
-        public DateTime CreatedAtUTC { get; private set; }
-        public DateTime FinishedAtUTC { get; private set; }
-    }
+    public static string EventName => "job-result";
 }

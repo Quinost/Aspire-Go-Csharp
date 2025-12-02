@@ -9,22 +9,28 @@ var password = builder.AddParameter("password", "guest", secret: true);
 var rabbitmq = builder.AddRabbitMQ(Constants.RabbitMqName, username, password)
     .WithManagementPlugin();
 
-var rabbitConnectionString = rabbitmq.Resource.ConnectionStringExpression;
+var postgres = builder.AddPostgres(Constants.PostgresName)
+    .WithPgAdmin(c => c.WithHostPort(5050))
+    .WithLifetime(ContainerLifetime.Session)
+    .AddDatabase("jobs");
 
-Console.WriteLine($"Go service path: {Path.GetFullPath("../../../../Services")}");
+var rabbitConnectionString = rabbitmq.Resource.ConnectionStringExpression;
+var postgresConnectionString = postgres.Resource.ConnectionStringExpression;
 
 var api = builder.AddProject<Projects.API>(Constants.APIName)
     .WaitFor(rabbitmq)
-    .WithEnvironment("RabbitMq__ConnectionString", rabbitConnectionString);
+    .WaitFor(postgres)
+    .WithEnvironment("DatabaseSql__ConnectionString", postgresConnectionString)
+    .WithEnvironment("RabbitMq__ConnectionString", rabbitConnectionString)
+    .WithArgs("--migrate");
 
-var go = builder.AddContainer("go-service", "go-service")
+var go = builder.AddContainer(Constants.GoWorkerpoolName, Constants.GoWorkerpoolName)
     .WithDockerfile("../../../../Services", "dockerfile")
-    .WithReference(rabbitmq)
+    .WithImageTag("latest")
     .WaitFor(rabbitmq)
     .WaitFor(api)
+    .WithEnvironment("RabbitMq__ConnectionString", rabbitConnectionString)
     .WithHttpEndpoint(port: 8080, targetPort: 8080, name: "http");
 
-//var goService = builder.AddExecutable("go-service", "wsl", ".",
-//        args: ["bash", "-c", "cd '/mnt/d/3.Sources/GO + C#/Services/cmd' && go run ."]);
 
 builder.Build().Run();

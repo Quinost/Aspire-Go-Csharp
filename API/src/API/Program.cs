@@ -8,9 +8,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 var cfg = builder.Configuration.Get<AppConfig>() ?? throw new InvalidOperationException("App configuration must be provided.");
 
+cfg.Migrate = args.Contains("--migrate");
+
 builder.AddServiceDefaults();
 
-builder.Services.AddRabbitMq(cfg);
+builder.Services.AddInfrastructure(cfg);
 builder.Services.AddMediator(Assembly.GetExecutingAssembly());
 
 builder.Services.AddControllers();
@@ -24,6 +26,13 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference();
+}
+
+if (cfg.Migrate)
+{
+    var scope = app.Services.CreateScope();
+    await scope.MigrateDb();
+    Console.WriteLine("Migration complete.");
 }
 
 app.UseHttpsRedirection();

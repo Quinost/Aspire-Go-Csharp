@@ -1,7 +1,5 @@
-﻿using API.Infrastructure;
-using API.Infrastructure.Commands;
+﻿using API.Infrastructure.Commands;
 using API.Mediator;
-using API.Shared.Requests;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers;
@@ -9,10 +7,10 @@ namespace API.Controllers;
 [ApiController]
 public class JobController(IMediator mediator) : ControllerBase
 {
-    [HttpGet]
-    public async Task<IActionResult> AddJob()
+    [HttpPost]
+    public async Task<IActionResult> AddJob([FromBody] AddJobRequest request)
     {
-        var guid = await mediator.Send(new AddJobRequest("DefaultJob"));
+        var guid = await mediator.Send(request);
         return Ok(guid);
     }
 }

@@ -33,3 +33,9 @@ tmp/
 # OS files
 .DS_Store
 Thumbs.db
+
+*.log
+.git
+.vs
+bin/
+obj/

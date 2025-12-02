@@ -27,9 +27,12 @@ FROM alpine:latest AS production
 RUN apk --no-cache add ca-certificates
 
 WORKDIR /app
+RUN mkdir -p main
 
-COPY --from=build /app/main .
+COPY --from=build /app/main ./main/
+COPY --from=build /app/config.yaml .
 
 EXPOSE 8080
 
+WORKDIR /app/main
 CMD ["./main"]

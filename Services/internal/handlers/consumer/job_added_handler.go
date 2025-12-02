@@ -5,20 +5,14 @@ import (
 	"encoding/json"
 	"log"
 	"services/internal/constants"
-	"services/internal/handlers/publisher"
 	router "services/internal/infrastructure/messagerouter"
 	"services/pkg/generic"
+	"services/pkg/models"
 	"time"
 
 	"github.com/ThreeDotsLabs/watermill/message"
 	"github.com/google/uuid"
 )
-
-type JobAddedEvent struct {
-	JobID        uuid.UUID `json:"jobId"`
-	JobName      string    `json:"jobName"`
-	CreatedAtUTC time.Time `json:"createdAtUTC"`
-}
 
 type JobAddedHandler struct {
 	publisher message.Publisher
@@ -37,23 +31,27 @@ func (h *JobAddedHandler) GetQueueConfig() router.QueueConfig {
 		QueueName:    constants.JobAddedQueue,
 		ExchangeName: constants.JobAddedQueue,
 		ExchangeType: constants.ExchangeFanout,
-		RoutingKey:   "",
+		RoutingKey:   "#",
 		Durable:      true,
 	}
 }
 
 func (h *JobAddedHandler) Handle(_ context.Context, msg *message.Message) error {
-	var event JobAddedEvent
+	var event models.JobAddedEvent
 	if err := json.Unmarshal(msg.Payload, &event); err != nil {
 		return err
 	}
 
-	h.pool.SubmitNewJob(func() error {
-		log.Printf("Processing job: ID=%s, Title=%s", event.JobID, event.JobName)
+	h.pool.SubmitJob(func() error {
+		log.Printf("Processing job: ID=%s, Title=%s", event.JobID, event.Name)
 
-		result := publisher.JobResultEvent{
-			JobID:         uuid.New(),
-			JobName:       "completed job",
+		time.Sleep(17 * time.Second)
+
+		result := models.JobResultEvent{
+			JobID:         event.JobID,
+			Name:          event.Name,
+			Status:        models.Failed,
+			Reason:        string(models.Completed),
 			CreatedAtUTC:  event.CreatedAtUTC,
 			FinishedAtUTC: time.Now(),
 		}
@@ -63,12 +61,12 @@ func (h *JobAddedHandler) Handle(_ context.Context, msg *message.Message) error 
 		return nil
 	})
 
-	log.Printf("Job: ID=%s, Title=%s added to workerpool", event.JobID, event.JobName)
+	log.Printf("Job: ID=%s, Title=%s added to workerpool", event.JobID, event.Name)
 
 	return nil
 }
 
-func (h *JobAddedHandler) publishJobResult(result publisher.JobResultEvent) error {
+func (h *JobAddedHandler) publishJobResult(result models.JobResultEvent) error {
 	payload, err := json.Marshal(result)
 	if err != nil {
 		return err

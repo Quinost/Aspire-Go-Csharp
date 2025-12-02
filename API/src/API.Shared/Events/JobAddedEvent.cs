@@ -1,18 +1,11 @@
-﻿using System;
+﻿namespace API.Shared.Events;
 
-namespace API.Shared.Events
+public class JobAddedEvent(string name) : IGoEvent
 {
-    public class JobAddedEvent : IGoEvent
-    {
-        public JobAddedEvent(string jobName) 
-        { 
-            JobId = Guid.NewGuid();
-            JobName = jobName;
-            CreatedAtUTC = DateTime.UtcNow;
-        }
+    public static string EventName => "job-added";
 
-        public Guid JobId { get; private set; }
-        public string JobName { get; private set; }
-        public DateTime CreatedAtUTC { get; private set; }
-    }
+    public Guid JobId { get; private set; } = Guid.NewGuid();
+    public string Name { get; private set; } = name;
+    public JobStatus Status { get; private set; } = JobStatus.Pending;
+    public DateTime CreatedAtUTC { get; private set; } = DateTime.UtcNow;
 }

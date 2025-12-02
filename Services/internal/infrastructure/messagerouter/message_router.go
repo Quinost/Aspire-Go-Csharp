@@ -34,7 +34,6 @@ func NewMessageRouter(rabbitURL string, logger watermill.LoggerAdapter) *Message
 	}
 }
 
-
 func (mr *MessageRouter) Run(ctx context.Context) error {
 	return mr.router.Run(ctx)
 }
@@ -46,29 +45,29 @@ func (mr *MessageRouter) Close() error {
 			log.Printf("Error closing subscriber %s: %v", name, err)
 		}
 	}
-	
+
 	for name, pub := range mr.publishers {
 		log.Printf("Closing publisher for: %s", name)
 		if err := pub.Close(); err != nil {
 			log.Printf("Error closing publisher %s: %v", name, err)
 		}
 	}
-	
+
 	return mr.router.Close()
 }
 
 // Add consumer (only queue and bind without exchange)
 func (mr *MessageRouter) AddConsumerHandler(handler MessageHandler) error {
 	mr.handlers = append(mr.handlers, handler)
-	
+
 	config := handler.GetQueueConfig()
-	
+
 	subscriberConfig := createSubscriberConfigForQueue(mr.rabbitURL, config)
 	subscriber, err := amqp.NewSubscriber(subscriberConfig, mr.logger)
 	if err != nil {
 		return err
 	}
-	
+
 	mr.subscribers[config.QueueName] = subscriber
 
 	mr.router.AddConsumerHandler(
@@ -79,7 +78,7 @@ func (mr *MessageRouter) AddConsumerHandler(handler MessageHandler) error {
 			return handler.Handle(context.Background(), msg)
 		},
 	)
-	
+
 	log.Printf("Registered consumer handler for queue: %s, exchange: %s", config.QueueName, config.ExchangeName)
 	return nil
 }
@@ -98,11 +97,10 @@ func (mr *MessageRouter) AddPublisher(exchangeConfig ExchangeConfig) (message.Pu
 
 	mr.publishers[exchangeConfig.ExchangeName] = publisher
 	log.Printf("Registered publisher for exchange: %s (type: %s)", exchangeConfig.ExchangeName, exchangeConfig.ExchangeType)
-	
+
 	return publisher, nil
 }
 
-// createSubscriberConfigForQueue tworzy konfigurację subscribera na podstawie QueueConfig
 func createSubscriberConfigForQueue(rabbitURL string, qConfig QueueConfig) amqp.Config {
 	config := amqp.NewDurableQueueConfig(rabbitURL)
 
@@ -138,7 +136,7 @@ func createPublisherConfigForExchange(rabbitURL string, eConfig ExchangeConfig) 
 		Connection: amqp.ConnectionConfig{
 			AmqpURI: rabbitURL,
 		},
-		Marshaler: amqp.DefaultMarshaler{},
+		Marshaler:       amqp.DefaultMarshaler{},
 		TopologyBuilder: &amqp.DefaultTopologyBuilder{},
 		Publish: amqp.PublishConfig{
 			ChannelPoolSize: 20,

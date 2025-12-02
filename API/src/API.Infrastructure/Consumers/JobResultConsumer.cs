@@ -1,13 +1,25 @@
-﻿using API.Shared.Events;
+﻿using API.Infrastructure.Database;
+using API.Shared.Entities;
+using API.Shared.Events;
 
 namespace API.Infrastructure.Consumers;
 
-public class JobResultConsumer : IConsumer<JobResultEvent>
+public class JobResultConsumer(ApiDbContext dbContext) : IConsumer<JobResultEvent>
 {
-    public Task Consume(ConsumeContext<JobResultEvent> context)
+    public async Task Consume(ConsumeContext<JobResultEvent> context)
     {
-        var ddd = context.Message;
-        Console.WriteLine(ddd);
-        return Task.CompletedTask;
+        var job = context.Message;
+        var result = new JobResult()
+        {
+            JobId = job.JobId,
+            Name = job.Name,
+            Status = job.Status.ToString(),
+            Reason = job.Reason,
+            CreatedAt = job.CreatedAtUTC,
+            FinishedAt = job.FinishedAtUTC,
+        };
+
+        await dbContext.JobResults.AddAsync(result);
+        await dbContext.SaveChangesAsync();
     }
 }
